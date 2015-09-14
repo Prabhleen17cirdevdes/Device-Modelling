@@ -1,0 +1,136 @@
+go atlas
+
+# mesh 
+mesh space.mult=1.5
+
+x.mesh loc=0.0 spac=0.006
+x.mesh loc=0.050 spac=0.003
+x.mesh loc=0.060 spac=0.006
+x.mesh loc=0.070 spac=0.006
+x.mesh loc=0.10  spac=0.003
+x.mesh loc=0.110  spac=0.003
+x.mesh loc=0.150  spac=0.003
+x.mesh loc=0.350  spac=0.003
+x.mesh loc=0.400  spac=0.006
+
+y.mesh loc=-0.070 spac=0.006
+y.mesh loc=-0.050 spac=0.006
+y.mesh loc=-0.04 spac=0.006
+y.mesh loc=-0.03 spac=0.003
+y.mesh loc=0.0 spac=0.003
+y.mesh loc=0.300 spac=0.006
+
+
+
+# region
+region number=1 y.min=0.00 y.max=0.300                              material=SiO2
+region number=2   y.min=-0.03 y.max=0.00    material=Silicon
+region number=3   y.min=-0.07 y.max=-0.03            material=SiO2
+
+# electrode
+electrode name=emitter number=1 x.min=0.0 x.max=0.050 y.min=-0.07 y.max=0.000
+electrode name=emitter number=2 x.min=0.050 x.max=0.10 y.min=-0.07 y.max=-0.03    
+electrode name=base number=3 x.min=0.110 x.max=0.150 y.min=-0.07 y.max=-0.03
+electrode name=collector number=4 x.min=0.350 y.min=-0.07 y.max=0.000
+
+# doping
+doping uniform conc=1e14 p.type  region=2   
+doping uniform conc=1e14 p.type region=4 name=substrate
+
+#contact
+contact name=emitter workfunction=3.9
+contact name=base workfunction=5.4
+contact name=collector workfunction=4.28
+
+#model
+models fermidirac  klasrh bipolar print
+impact selb
+output con.band val.band
+
+#method
+method   newton 
+solve init
+
+#Before Bias Structure
+save outf=SC_BCPT_1.str
+tonyplot  SC_BCPT_1.str
+
+
+# Gummel Plot
+
+solve vbase=0.0
+solve vcollector=1.0 
+
+log outf=temp_600_SC_BCPT.log
+
+solve vbase=0.0 vstep=0.05 vfinal=1.2 name=base ac freq=1e6
+
+
+tonyplot temp_600_SC_BCPT.log
+
+
+extract name="peak gain" max(i."collector"/i."base")
+extract name="max fT" max((g."collector""base")/(2*3.1415*c."base""base"))
+
+
+
+#IC/VCE with constant IB
+
+#ramp Vb
+solve init
+solve vcollector=0.1
+solve vbase=0.1
+
+
+solve  vbase=0.00 vstep=0.05 vfinal=1.2 name=base
+
+# switch to current boundary conditions
+
+contact name=base current
+
+
+# ramp IB and save solutions
+solve ibase=1.e-9 master
+save outf=outputchar_1.str master
+
+solve ibase=5.e-12 master
+save outf=outputchar_2.str master
+
+solve ibase=5.e-9 master
+save outf=outputchar_3.str master
+
+solve ibase=7.e-9 master
+save outf=outputchar_4.str master
+
+solve ibase=20.e-7 master
+save outf=outputchar_5.str master
+
+# load in each initial guess file and ramp VCE
+
+load inf=outputchar_1.str master
+log outf=outputchar_1.log 
+solve vcollector=0.0 vstep=0.025 vfinal=3 name=collector
+
+load inf=outputchar_2.str master
+log outf=outputchar_2.log 
+solve vcollector=0.0 vstep=0.025 vfinal=3 name=collector
+
+load inf=outputchar_3.str master
+log outf=outputchar_3.log 
+solve vcollector=0.0 vstep=0.025 vfinal=3 name=collector
+
+load inf=outputchar_4.str master
+log outf=outputchar_4.log 
+solve vcollector=0.0 vstep=0.05 vfinal=3.0 name=collector
+
+load inf=outputchar_5.str master
+log outf=outputchar_5.log 
+solve vcollector=0.0 vstep=0.05 vfinal=1.6 name=collector
+
+# plot results
+tonyplot outputchar_5.log  
+extract name="bvceo" x.val from curve(abs(v."collector"),abs(i."collector")) where y.val = 745e-5
+
+
+quit
+                                                                                                                                                    
