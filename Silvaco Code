@@ -1,9 +1,10 @@
 go atlas
 
 # mesh 
+#device Structure of bipolar transistor.
 mesh space.mult=1.5
 
-x.mesh loc=0.0 spac=0.006
+x.mesh loc=0.0 spac=0.006 
 x.mesh loc=0.050 spac=0.003
 x.mesh loc=0.060 spac=0.006
 x.mesh loc=0.070 spac=0.006
